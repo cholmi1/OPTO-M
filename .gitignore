@@ -26,8 +26,8 @@ dist-ssr
 *.zip
 
 # Temporary folders
-TONO-i-CVT200/
-IDROP/
+/TONO-i-CVT200/
+/IDROP/
 
 # Temporary files
 err.txt
