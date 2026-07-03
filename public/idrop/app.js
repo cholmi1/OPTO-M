@@ -76,6 +76,8 @@ const appState = {
     // 임시 모달 활성용 타겟 ID 보관
     activeAlarmTemp: null,
     activeEditingRecordId: null, // 점안 결과 팝업 수정용 ID
+    chartStartDate: "2023-12-08",
+    chartEndDate: "2023-12-14",
 
     // 오디오 콘텍스트
     audioContext: null,
@@ -259,9 +261,19 @@ function renderComplianceStats() {
     
     if (!txtRate || !txtCounts || !txtFormula) return;
 
+    const start = new Date(appState.chartStartDate || '2023-12-08');
+    const end = new Date(appState.chartEndDate || '2023-12-14');
+    end.setHours(23, 59, 59, 999);
+
+    // 날짜 범위에 필터링된 기록
+    const filteredRecords = appState.historyRecords.filter(r => {
+        const rDate = new Date(r.date);
+        return rDate >= start && rDate <= end;
+    });
+
     // 점안 완료(taken: true) 갯수와 전체 이력 갯수를 활용한 리액티브 계산
-    const taken = appState.historyRecords.filter(r => r.taken).length;
-    const total = appState.historyRecords.length;
+    const taken = filteredRecords.filter(r => r.taken).length;
+    const total = filteredRecords.length;
     const missed = total - taken;
     
     const rate = total > 0 ? Math.round((taken / total) * 100) : 0;
@@ -288,8 +300,17 @@ function renderComplianceChart() {
     const chartW = w - paddingLeft - paddingRight;
     const chartH = h - paddingTop - paddingBottom;
 
-    // 날짜 매핑 (Y축)
-    const dates = ["12/14", "12/13", "12/12", "12/11", "12/10", "12/9", "12/8"];
+    // 날짜 매핑 (Y축) - 다이내믹하게 시작일과 종료일 범위 생성
+    const dates = [];
+    const start = new Date(appState.chartStartDate || '2023-12-08');
+    const end = new Date(appState.chartEndDate || '2023-12-14');
+    
+    // 종료일부터 시작일까지 거꾸로 Y축 배열에 추가 (종료일이 맨 위)
+    for (let d = new Date(end); d >= start; d.setDate(d.getDate() - 1)) {
+        const mm = String(d.getMonth() + 1);
+        const dd = String(d.getDate());
+        dates.push(`${mm}/${dd}`);
+    }
 
     // 좌표 연산 헬퍼
     function getX(hour) {
@@ -1087,6 +1108,8 @@ document.addEventListener('DOMContentLoaded', () => {
             appState.historyRecords = JSON.parse(INITIAL_HISTORY);
             
             disconnectBluetooth();
+            appState.chartStartDate = "2023-12-08";
+            appState.chartEndDate = "2023-12-14";
             document.getElementById('txt-date-range').textContent = "[2023/12/8] ~ [2023/12/14]";
             const noteTextarea = document.getElementById('med-notes');
             if (noteTextarea) noteTextarea.value = "";
@@ -1098,6 +1121,59 @@ document.addEventListener('DOMContentLoaded', () => {
             navigateTo('page-home');
             alert("초기 데이터 상태로 복원되었습니다.");
         }
+    });
+
+    // ------------------------------------------
+    // [신규] 점안 준수현황 기간 설정 팝업 제어
+    // ------------------------------------------
+    const dateRangeBtn = document.querySelector('.date-range-content');
+    if (dateRangeBtn) {
+        dateRangeBtn.addEventListener('click', () => {
+            const rangeText = document.getElementById('txt-date-range').textContent;
+            const matches = rangeText.match(/\[(\d{4})\/(\d{1,2})\/(\d{1,2})\]\s*~\s*\[(\d{4})\/(\d{1,2})\/(\d{1,2})\]/);
+            if (matches) {
+                const startY = matches[1];
+                const startM = String(matches[2]).padStart(2, '0');
+                const startD = String(matches[3]).padStart(2, '0');
+                const endY = matches[4];
+                const endM = String(matches[5]).padStart(2, '0');
+                const endD = String(matches[6]).padStart(2, '0');
+                
+                document.getElementById('comp-start-date').value = `${startY}-${startM}-${startD}`;
+                document.getElementById('comp-end-date').value = `${endY}-${endM}-${endD}`;
+            }
+            document.getElementById('compliance-date-popup').classList.add('active');
+        });
+    }
+
+    document.getElementById('btn-comp-date-save').addEventListener('click', () => {
+        const startVal = document.getElementById('comp-start-date').value;
+        const endVal = document.getElementById('comp-end-date').value;
+        if (!startVal || !endVal) {
+            alert("시작일과 종료일을 모두 선택해 주세요.");
+            return;
+        }
+        if (new Date(startVal) > new Date(endVal)) {
+            alert("시작일은 종료일보다 이전 날짜여야 합니다.");
+            return;
+        }
+
+        const [sy, sm, sd] = startVal.split('-');
+        const [ey, em, ed] = endVal.split('-');
+
+        appState.chartStartDate = startVal;
+        appState.chartEndDate = endVal;
+        
+        document.getElementById('txt-date-range').textContent = `[${sy}/${parseInt(sm)}/${parseInt(sd)}] ~ [${ey}/${parseInt(em)}/${parseInt(ed)}]`;
+        
+        renderComplianceChart();
+        renderComplianceStats();
+        
+        document.getElementById('compliance-date-popup').classList.remove('active');
+    });
+
+    document.getElementById('btn-comp-date-cancel').addEventListener('click', () => {
+        document.getElementById('compliance-date-popup').classList.remove('active');
     });
 
 });

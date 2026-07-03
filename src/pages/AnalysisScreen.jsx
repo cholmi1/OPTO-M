@@ -10,6 +10,19 @@ export default function AnalysisScreen({ onNavigate, records }) {
   // 날짜 범위 상태 (기본 최근 30일)
   const [startDate, setStartDate] = useState('2026-05-31')
   const [endDate, setEndDate] = useState('2026-06-29')
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false)
+  const [tempStartDate, setTempStartDate] = useState('2026-05-31')
+  const [tempEndDate, setTempEndDate] = useState('2026-06-29')
+
+  const handleApplyDates = () => {
+    if (new Date(tempStartDate) > new Date(tempEndDate)) {
+      alert('시작일은 종료일보다 이전 날짜여야 합니다.')
+      return
+    }
+    setStartDate(tempStartDate)
+    setEndDate(tempEndDate)
+    setIsDatePickerOpen(false)
+  }
 
   // 필터링 및 그래프용 데이터 가공
   const [chartData, setChartData] = useState([])
@@ -125,11 +138,19 @@ export default function AnalysisScreen({ onNavigate, records }) {
         </div>
       </div>
 
-      {/* 날짜 범위 텍스트 */}
-      <div className="text-center text-xs text-gray-400 mb-4 flex-shrink-0 space-y-1">
-        <div className="text-sm font-bold text-gray-200">기간별 일 평균 안압 변화</div>
-        <div>📅 {startDate.replace(/-/g, '. ')}. 부터</div>
-        <div>📅 {endDate.replace(/-/g, '. ')}. 까지</div>
+      {/* 날짜 범위 선택 카드 */}
+      <div 
+        onClick={() => {
+          setTempStartDate(startDate)
+          setTempEndDate(endDate)
+          setIsDatePickerOpen(true)
+        }}
+        className="mx-auto px-4 py-2.5 bg-white/5 border border-white/10 hover:border-emerald-500/40 rounded-xl text-center text-xs text-gray-300 mb-4 cursor-pointer active:scale-98 transition-all flex flex-col items-center justify-center gap-1 w-[260px] flex-shrink-0"
+      >
+        <div className="text-[10px] font-bold text-emerald-400">📅 분석 기간 설정 (터치)</div>
+        <div className="text-xs font-bold text-white mt-0.5">
+          {startDate.replace(/-/g, '. ')} ~ {endDate.replace(/-/g, '. ')}
+        </div>
       </div>
 
       {/* 차트 영역 */}
@@ -246,6 +267,51 @@ export default function AnalysisScreen({ onNavigate, records }) {
       >
         확인
       </button>
+
+      {/* 기간 설정 달력 팝업 모달 */}
+      {isDatePickerOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="w-full max-w-[280px] bg-slate-900 border-2 border-emerald-500/50 rounded-3xl p-5 shadow-2xl animate-in fade-in zoom-in-95 duration-200 text-left">
+            <h3 className="text-sm font-bold text-white mb-4">📅 분석 기간 설정</h3>
+            
+            <div className="space-y-3 mb-5">
+              <div>
+                <label className="text-[10px] text-slate-400 block mb-1">시작일</label>
+                <input 
+                  type="date"
+                  value={tempStartDate}
+                  onChange={e => setTempStartDate(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white font-bold outline-none focus:border-emerald-500"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] text-slate-400 block mb-1">종료일</label>
+                <input 
+                  type="date"
+                  value={tempEndDate}
+                  onChange={e => setTempEndDate(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white font-bold outline-none focus:border-emerald-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <button 
+                onClick={handleApplyDates}
+                className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2 rounded-xl cursor-pointer transition-colors"
+              >
+                적용
+              </button>
+              <button 
+                onClick={() => setIsDatePickerOpen(false)}
+                className="flex-1 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white text-xs font-bold py-2 rounded-xl border border-white/10 cursor-pointer transition-colors"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

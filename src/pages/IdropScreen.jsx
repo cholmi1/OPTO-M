@@ -23,7 +23,7 @@ export default function IdropScreen({ onNavigate }) {
           src="/idrop/index.html?embed=true" 
           title="IDROPM"
           className="w-full h-full border-none bg-transparent"
-          sandbox="allow-scripts allow-same-origin"
+          sandbox="allow-scripts allow-same-origin allow-modals allow-popups"
         />
       </div>
     </div>

@@ -464,6 +464,31 @@
                             </div>
                         </div>
 
+                        <!-- [신규] 점안 준수현황 기간 설정 팝업 모달 -->
+                        <div class="popup-backdrop" id="compliance-date-popup">
+                            <div class="result-modal-card">
+                                <h2 class="result-popup-title" style="background: var(--purple-main) !important;">기간 설정</h2>
+                                
+                                <div class="result-form-container" style="margin-top: 15px;">
+                                    <!-- 시작일 -->
+                                    <div class="result-form-row">
+                                        <span class="result-label">시작일</span>
+                                        <input type="date" class="result-field-input" id="comp-start-date" value="2023-12-08" style="background: #F4F3FA; border: 1px solid #E6E4F9; border-radius: 8px; padding: 6px 10px; font-size: 12px; outline: none;">
+                                    </div>
+                                    <!-- 종료일 -->
+                                    <div class="result-form-row" style="margin-top: 10px;">
+                                        <span class="result-label">종료일</span>
+                                        <input type="date" class="result-field-input" id="comp-end-date" value="2023-12-14" style="background: #F4F3FA; border: 1px solid #E6E4F9; border-radius: 8px; padding: 6px 10px; font-size: 12px; outline: none;">
+                                    </div>
+                                </div>
+
+                                <div class="result-popup-buttons" style="margin-top: 20px; display: flex; gap: 8px;">
+                                    <button class="btn-result-action" id="btn-comp-date-save" style="flex: 1; background: var(--purple-main); color: white; border: none; border-radius: 10px; padding: 10px 0; font-size: 12px; font-weight: 700; cursor: pointer;">적용</button>
+                                    <button class="btn-result-action" id="btn-comp-date-cancel" style="flex: 1; background: #F4F3FA; color: #5C5870; border: 1px solid #E6E4F9; border-radius: 10px; padding: 10px 0; font-size: 12px; font-weight: 700; cursor: pointer;">취소</button>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- [신규] [점안결과] 상세 모달 팝업 (이미지 8 기반) -->
                         <div class="popup-backdrop" id="result-detail-popup">
                             <div class="result-modal-card">
