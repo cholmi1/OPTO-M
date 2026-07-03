@@ -300,48 +300,51 @@ function renderComplianceChart() {
     const chartW = w - paddingLeft - paddingRight;
     const chartH = h - paddingTop - paddingBottom;
 
-    // 날짜 매핑 (Y축) - 다이내믹하게 시작일과 종료일 범위 생성
+    // 날짜 매핑 (X축) - 다이내믹하게 시작일과 종료일 범위 생성 (왼쪽에서 오른쪽으로 정렬)
     const dates = [];
     const start = new Date(appState.chartStartDate || '2023-12-08');
     const end = new Date(appState.chartEndDate || '2023-12-14');
     
-    // 종료일부터 시작일까지 거꾸로 Y축 배열에 추가 (종료일이 맨 위)
-    for (let d = new Date(end); d >= start; d.setDate(d.getDate() - 1)) {
+    // 시작일부터 종료일까지 순서대로 X축 배열에 추가
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
         const mm = String(d.getMonth() + 1);
         const dd = String(d.getDate());
         dates.push(`${mm}/${dd}`);
     }
 
     // 좌표 연산 헬퍼
-    function getX(hour) {
-        return paddingLeft + (hour / 24) * chartW;
+    // X축: 날짜 인덱스
+    function getX(dateIdx) {
+        if (dates.length <= 1) return paddingLeft + chartW / 2;
+        return paddingLeft + dateIdx * (chartW / (dates.length - 1));
     }
-    function getY(dateIdx) {
-        return paddingTop + dateIdx * (chartH / (dates.length - 1));
+    // Y축: 시간 (위가 0시, 아래가 24시)
+    function getY(hour) {
+        return paddingTop + (hour / 24) * chartH;
     }
 
-    // 1. 수평선 (일자 기준 라인 7개) 및 Y축 일자 텍스트 생성
+    // 1. 수평선 (4시간 단위 시간 격자선) 및 Y축 시간 텍스트 생성 (0, 4, 8, 12, 16, 20, 24시)
     let yLinesHtml = '';
-    dates.forEach((date, idx) => {
-        const yPos = getY(idx);
+    const hoursTicks = [0, 4, 8, 12, 16, 20, 24];
+    hoursTicks.forEach(tick => {
+        const yPos = getY(tick);
         yLinesHtml += `
-            <!-- 가로 일자 격자선 -->
+            <!-- 가로 시간 격자선 -->
             <line x1="${paddingLeft}" y1="${yPos}" x2="${w - paddingRight}" y2="${yPos}" stroke="#EAECF0" stroke-width="1.5" />
-            <!-- Y축 날짜 라벨 -->
-            <text x="${paddingLeft - 8}" y="${yPos + 4}" font-size="10" font-weight="600" fill="#4E5968" text-anchor="end">${date}</text>
+            <!-- Y축 시간 라벨 -->
+            <text x="${paddingLeft - 8}" y="${yPos + 4}" font-size="10" font-weight="600" fill="#4E5968" text-anchor="end">${tick}시</text>
         `;
     });
 
-    // 2. 수직선 (4시간 단위 시간 격자선) 및 X축 시간 텍스트 생성 (0, 4, 8, 12, 16, 20, 24시)
+    // 2. 수직선 (일자 격자선) 및 X축 일자 텍스트 생성
     let xLinesHtml = '';
-    const hoursTicks = [0, 4, 8, 12, 16, 20, 24];
-    hoursTicks.forEach(tick => {
-        const xPos = getX(tick);
+    dates.forEach((date, idx) => {
+        const xPos = getX(idx);
         xLinesHtml += `
-            <!-- 세로 시간 격자 점선 -->
+            <!-- 세로 일자 격자 점선 -->
             <line x1="${xPos}" y1="${paddingTop}" x2="${xPos}" y2="${h - paddingBottom}" stroke="#EAECF0" stroke-width="1" stroke-dasharray="2, 2" />
-            <!-- X축 시간 라벨 -->
-            <text x="${xPos}" y="${h - 10}" font-size="10" font-weight="600" fill="#98A2B3" text-anchor="middle">${tick}시</text>
+            <!-- X축 날짜 라벨 -->
+            <text x="${xPos}" y="${h - 10}" font-size="10" font-weight="600" fill="#98A2B3" text-anchor="middle">${date}</text>
         `;
     });
 
@@ -354,8 +357,8 @@ function renderComplianceChart() {
         
         if (dateIdx === -1) return; // 범위 밖 날짜 무시
 
-        const xPos = getX(rec.hour);
-        const yPos = getY(dateIdx);
+        const xPos = getX(dateIdx);
+        const yPos = getY(rec.hour);
 
         // 점안 완료(taken: true) -> 보라색 채워진 원형 도트
         // 미점안(taken: false) -> 속이 빈 보라색 테두리 원형 도트
@@ -819,6 +822,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // [취소]
     document.getElementById('btn-result-cancel').addEventListener('click', () => {
         closeResultDetailPopup();
+    });
+
+    // [알림 편집 취소]
+    document.getElementById('btn-cancel-alarm-detail').addEventListener('click', () => {
+        navigateTo('page-alarm-list');
     });
 
     // ------------------------------------------
